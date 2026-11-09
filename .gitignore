@@ -1,0 +1,22 @@
+# Pliki kompilacji CMake / C++ (PC testy)
+build/
+cmake-build-*/
+*.exe
+*.o
+*.obj
+*.a
+
+# Pliki tymczasowe Arduino
+*.bin
+*.elf
+*.map
+*.hex
+
+# Pliki konfiguracyjne IDE
+.vscode/
+.idea/
+
+# Pliki systemowe i dane wrażliwe
+.DS_Store
+Thumbs.db
+secrets.h
