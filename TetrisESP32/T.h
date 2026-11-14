@@ -14,8 +14,8 @@ class T : public Block {
                 // Obrót o 90 stopni w prawo: wypustka po PRAWEJ
                 return { {x_, y_ - 1}, {x_, y_}, {x_, y_ + 1}, {x_ + 1, y_} };
             
-            case 2: 
-                // Obrót o 180 stopni: wypustka na DOLE
+            case 2:
+                return { {x_ - 1, y_}, {x_, y_}, {x_ + 1, y_}, {x_, y_ + 1} };
             
             case 3: 
                 return { {x_, y_ - 1}, {x_, y_}, {x_, y_ + 1}, {x_ - 1, y_} };
