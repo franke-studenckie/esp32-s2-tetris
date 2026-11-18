@@ -10,10 +10,7 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(googletest)
 
-add_executable(run_tests 
-    tests/test_tetris.cpp 
-    TetrisESP32/Board.cpp
-)
+add_executable(run_tests tests/test_tetris.cpp)
 
 target_include_directories(run_tests PRIVATE TetrisESP32)
 

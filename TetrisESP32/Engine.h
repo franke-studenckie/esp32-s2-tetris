@@ -34,11 +34,23 @@ class Engine {
             int newX = point.x + dx;
             int newY = point.y + dy;
 
-            if (!board_.isInside(newX, newY)) {
+            if (board_.isOccupied(newX, newY)) {
                 return true; 
             }
         }
         return false;
+    }
+
+    void lockBlock(){
+        if (!curr_block_) return;
+        
+        auto blocks = curr_block_ -> getBlocks();
+
+        for(const auto& point : blocks){
+            board_.setCell(point.x, point.y);
+        }
+        points_ += 100 * board_.clearFullLines();
+        SpawnBlock();
     }
 
     bool moveBlock(int dx, int dy) {
@@ -46,8 +58,16 @@ class Engine {
             curr_block_->move(dx, dy);
             return true;
         }
+        else{
+            if(dx == 0 && dy == 1){
+                lockBlock();
+            }
+        }
         return false; 
     }
+
+    int getPoints() const { return points_; }
+    const Board& getBoard() const { return board_; }
 };
 
 #endif

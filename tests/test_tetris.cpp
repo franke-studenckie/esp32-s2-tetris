@@ -93,6 +93,77 @@ TEST(EngineTest, FloorCollisionDetection) {
     // Próba wykonania 19-tego ruchu powinna zostać zablokowana!
     EXPECT_FALSE(game.moveBlock(0, 1)); 
     
-    // Sprawdzamy, czy klocek nie przebił planszy i faktycznie zatrzymał się na Y = 18
-    EXPECT_EQ(game.getBlock()->getY(), 18);
+    EXPECT_TRUE(game.getBoard().isOccupied(4, 18));
+    EXPECT_TRUE(game.getBoard().isOccupied(5, 19));
+    EXPECT_EQ(game.getBlock()->getY(), 0);
+}
+
+TEST(BoardTest, ClearLinesAndGravity) {
+    Board board(10, 20);
+
+    // Wypełniamy dwa dolne wiersze (y = 18 i y = 19)
+    for (int x = 0; x < 10; ++x) {
+        board.setCell(x, 19);
+        board.setCell(x, 18);
+    }
+    // Stawiamy pojedynczy "klocek kontrolny" nad nimi (x = 3, y = 17)
+    board.setCell(3, 17);
+
+    // Sprawdzamy, czy pętla z y++ poprawnie wytnie obie linie naraz
+    EXPECT_EQ(board.clearFullLines(), 2);
+
+    // Klocek z (3, 17) powinien spaść o 2 pola w dół, na (3, 19)
+    EXPECT_TRUE(board.isOccupied(3, 19));
+    EXPECT_FALSE(board.isOccupied(3, 17));
+    // Sąsiednie pola na dole powinny być już wyczyszczone
+    EXPECT_FALSE(board.isOccupied(0, 19));
+    EXPECT_FALSE(board.isOccupied(0, 18));
+}
+
+//Test piętrowania: drugi klocek zatrzymuje się na pierwszym, nie na podłodze
+TEST(EngineTest, BlockStacking) {
+    Engine game;
+
+    // Pętla while zrzuca klocek w dół aż do zamrożenia (zwrócenia false)
+    while (game.moveBlock(0, 1)) {}
+
+    // Pierwszy kwadrat leży na y=18 i y=19.
+    // Drugi startuje na y=0, więc może spaść dokładnie 16 razy (do y=16, zajmując 16 i 17)
+    for (int i = 0; i < 16; ++i) {
+        EXPECT_TRUE(game.moveBlock(0, 1));
+    }
+
+    // 17. ruch uderza w pierwszy kwadrat i zamraża drugi klocek
+    EXPECT_FALSE(game.moveBlock(0, 1));
+
+    EXPECT_TRUE(game.getBoard().isOccupied(4, 16));
+    EXPECT_TRUE(game.getBoard().isOccupied(5, 17));
+    EXPECT_EQ(game.getBlock()->getY(), 0); // Trzeci klocek już czeka na górze
+}
+
+// 3. Test pełnej rozgrywki: 5 kwadratów obok siebie czyści 2 linie i daje 200 punktów
+TEST(EngineTest, ClearLinesAndScoring) {
+    Engine game;
+
+    // Przesunięcia w poziomie od pozycji startowej (x = 4), żeby zapełnić kolumny 0..9:
+    // -4 -> x=0, -2 -> x=2, 0 -> x=4, +2 -> x=6, +4 -> x=8
+    int offsets[] = { -4, -2, 0, 2, 4 };
+
+    for (int dx : offsets) {
+        int step = (dx > 0) ? 1 : -1;
+        for (int i = 0; i < std::abs(dx); ++i) {
+            EXPECT_TRUE(game.moveBlock(step, 0));
+        }
+        // Zrzucamy klocek aż do zamrożenia
+        while (game.moveBlock(0, 1)) {}
+    }
+
+    // 5 kwadratów 2x2 zapełniło naraz wiersze 18 i 19 -> 2 linie * 100 pkt = 200 pkt
+    EXPECT_EQ(game.getPoints(), 200);
+
+    // Dolne wiersze powinny być znów całkowicie puste
+    for (int x = 0; x < 10; ++x) {
+        EXPECT_FALSE(game.getBoard().isOccupied(x, 19));
+        EXPECT_FALSE(game.getBoard().isOccupied(x, 18));
+    }
 }
