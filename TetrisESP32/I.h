@@ -5,7 +5,7 @@
 
 class I : public Block {
 public:
-    I(int startX, int startY) : Block(startX, startY) {}
+    I(int startX, int startY) : Block(startX, startY, 3) {}
 
     std::vector<Point> getBlocks() const override {
         if (rotation_ % 2 == 0) {

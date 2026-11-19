@@ -168,7 +168,7 @@ TEST(EngineTest, ClearLinesAndScoring) {
 }
 
 TEST(EngineTest, GameOverWhenStackReachesTop) {
-    Engine game(false); // same kwadraty 2x2
+    Engine game(false); 
 
     // Plansza ma wysokość 20 -> 9 kwadratów zajmuje y = 2..19.
     // 10. kwadrat pojawia się jeszcze legalnie na y = 0..1.
@@ -196,4 +196,73 @@ TEST(EngineTest, RandomSpawningFitsInsideBoard) {
         ASSERT_NE(game.getBlock(), nullptr);
         EXPECT_FALSE(game.isGameOver());
     }
+}
+
+TEST(EngineTest, RotationBlockedByWall) {
+    Engine game(false);
+    game.SpawnBlock(1); // Klocek T na (4, 1), stan 0 (poziomy)
+
+    // Obrót na środku planszy (stan 0 -> stan 1, pionowy z wypustką w prawo)
+    EXPECT_TRUE(game.rotateBlock());
+
+    // W stanie 1 klocek T zajmuje x_ oraz x_+1, więc może dojechać 4 razy w lewo do x_ = 0
+    for (int i = 0; i < 4; ++i) {
+        EXPECT_TRUE(game.moveBlock(-1, 0));
+    }
+
+    // Przy ścianie (x_ = 0) obrót do stanu 2 wymagałby pola x = -1 -> musi zostać zablokowany
+    EXPECT_FALSE(game.rotateBlock());
+
+    // Po odsunięciu się o 1 pole w prawo (x_ = 1) obrót znowu jest legalny
+    EXPECT_TRUE(game.moveBlock(1, 0));
+    EXPECT_TRUE(game.rotateBlock());
+}
+
+TEST(EngineTest, ColorsPreservedAfterLock) {
+    Engine game(false);
+    game.SpawnBlock(1); // Klocek T (kolor = 2) na (4, 1)
+
+    EXPECT_EQ(game.getBlock()->getColor(), 2);
+
+    while (game.moveBlock(0, 1)) {} // Zrzucamy T na samo dno (y = 18 i 19)
+
+    // Zamrożone komórki powinny pamiętać ID koloru klocka T (2)
+    EXPECT_EQ(game.getBoard().getCell(3, 19), 2);
+    EXPECT_EQ(game.getBoard().getCell(4, 19), 2);
+    EXPECT_EQ(game.getBoard().getCell(5, 19), 2);
+    EXPECT_EQ(game.getBoard().getCell(4, 18), 2);
+    // Puste pole obok nadal ma 0
+    EXPECT_EQ(game.getBoard().getCell(0, 19), 0);
+}
+
+TEST(EngineTest, ResetRestoresInitialState) {
+    Engine game(false);
+
+    // 1. Najpierw zdobywamy 200 punktów (5 kwadratów w dolnym rzędzie)
+    int offsets[] = { -4, -2, 0, 2, 4 };
+    for (int dx : offsets) {
+        int step = (dx > 0) ? 1 : -1;
+        for (int i = 0; i < std::abs(dx); ++i) {
+            game.moveBlock(step, 0);
+        }
+        while (game.moveBlock(0, 1)) {}
+    }
+    ASSERT_EQ(game.getPoints(), 200);
+
+    // 2. Następnie doprowadzamy grę do Game Over (10 kwadratów jeden na drugim)
+    for (int i = 0; i < 10; ++i) {
+        while (game.moveBlock(0, 1)) {}
+    }
+    ASSERT_TRUE(game.isGameOver());
+
+    // 3. Resetujemy i sprawdzamy, czy wszystko wróciło do stanu początkowego
+    game.reset();
+
+    EXPECT_FALSE(game.isGameOver());
+    EXPECT_EQ(game.getPoints(), 0);
+    EXPECT_FALSE(game.getBoard().isOccupied(4, 19));
+    EXPECT_EQ(game.getBoard().getCell(4, 19), 0);
+    ASSERT_NE(game.getBlock(), nullptr);
+    EXPECT_EQ(game.getBlock()->getY(), 0);
+    EXPECT_TRUE(game.moveBlock(0, 1)); // Gra znów przyjmuje ruchy
 }

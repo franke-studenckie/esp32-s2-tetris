@@ -5,7 +5,7 @@
 
 class LL : public Block {
 public:
-    LL(int startX, int startY) : Block(startX, startY) {}
+    LL(int startX, int startY) : Block(startX, startY, 5) {}
 
     std::vector<Point> getBlocks() const override {
         switch (rotation_) {

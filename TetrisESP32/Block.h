@@ -13,9 +13,10 @@ class Block{
         int x_;
         int y_;
         int rotation_;
+        int color_;
     
     public:
-        Block(int startX, int startY) : x_(startX), y_(startY), rotation_(0) {}
+        Block(int startX, int startY, int color = 1) : x_(startX), y_(startY), rotation_(0), color_(color) {}
         virtual ~Block() = default;
 
         virtual std::vector<Point> getBlocks() const = 0;
@@ -29,8 +30,14 @@ class Block{
             rotation_ = (rotation_ + 1) % 4;        
         }
 
+        void undoRotate(){
+            rotation_ = (rotation_ + 3) % 4;
+        }
+
         int getX() { return x_; }
         int getY() { return y_; }
+
+        int getColor() const { return color_; }
 
 };
 

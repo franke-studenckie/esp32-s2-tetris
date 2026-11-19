@@ -4,7 +4,7 @@
 
 class square : public Block {
     public:
-        square(int startX, int startY) : Block(startX, startY) {}
+        square(int startX, int startY) : Block(startX, startY, 1) {}
 
         std::vector<Point> getBlocks() const override {
             return{ 

@@ -28,10 +28,19 @@ public:
     }
 
     //Zamraża klocek na planszy (zmienia 0 na 1)
-    void setCell(int x, int y) {
+    void setCell(int x, int y, int color = 1) {
         if (isInside(x, y)) {
-            grid_[y][x] = 1; 
+            grid_[y][x] = color; 
         }
+    }
+
+    int getCell(int x, int y) const {
+        if (!isInside(x, y)) return 0;
+        return grid_[y][x];
+    }
+
+    void clear() {
+        grid_.assign(height_, std::vector<int>(width_, 0));
     }
 
     int clearFullLines() {

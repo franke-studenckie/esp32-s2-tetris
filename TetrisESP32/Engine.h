@@ -21,15 +21,19 @@ class Engine {
         bool game_over_;
         bool random_mode_;
         std::mt19937 rng_;
+        int high_score_;
 
     public:
         Engine(bool randomMode = true) : board_(10, 20), points_(0), game_over_(false), random_mode_(randomMode) , rng_(std::random_device{}()){
             SpawnBlock();
         }
 
-        void SpawnBlock() {
+        void SpawnBlock(int forcedType = -1) {
             int type = 0;
-            if (random_mode_) {
+            if (forcedType >= 0 && forcedType <= 6) {
+                type = forcedType;
+            } 
+            else if (random_mode_) {
                 std::uniform_int_distribution<int> dist(0, 6);
                 type = dist(rng_);
             }
@@ -74,10 +78,15 @@ class Engine {
         
         auto blocks = curr_block_ -> getBlocks();
 
-        for(const auto& point : blocks){
-            board_.setCell(point.x, point.y);
+        for (const auto& point : blocks) {
+            board_.setCell(point.x, point.y, curr_block_->getColor());
         }
+
         points_ += 100 * board_.clearFullLines();
+
+        if (points_ > high_score_) {
+            high_score_ = points_;
+        }
         SpawnBlock();
     }
 
@@ -95,8 +104,35 @@ class Engine {
         return false; 
     }
 
+    bool rotateBlock(){
+        if (game_over_ || !curr_block_) return false;
+
+        curr_block_->rotate();
+
+        if (checkCollision(0, 0)) {
+            curr_block_->undoRotate();
+            return false;
+    }
+
+    return true;
+    }
+
+    void reset() {
+        board_.clear();
+        points_ = 0;
+        game_over_ = false;
+        SpawnBlock();
+    }
+
     int getPoints() const { return points_; }
     const Board& getBoard() const { return board_; }
+
+    int getHighScore() const { return high_score_; }
+    void setHighScore(int score) {
+        if (score > high_score_) {
+            high_score_ = score;
+        }
+    }
 
     bool isGameOver() const { return game_over_; }
 };
