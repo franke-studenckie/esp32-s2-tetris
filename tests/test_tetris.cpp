@@ -63,7 +63,7 @@ TEST(BlockTest, SquareBlocks) {
 }
 
 TEST(EngineTest, WallCollisionDetection) {
-    Engine game; 
+    Engine game(false); 
     // Przesuwamy kwadrat w prawo krok po kroku:
     EXPECT_TRUE(game.moveBlock(1, 0)); // Ruch 1: x = 5 (zajmuje 5 i 6). Ruch legalny.
     EXPECT_TRUE(game.moveBlock(1, 0)); // Ruch 2: x = 6 (zajmuje 6 i 7). Ruch legalny.
@@ -78,8 +78,7 @@ TEST(EngineTest, WallCollisionDetection) {
 }
 
 TEST(EngineTest, FloorCollisionDetection) {
-    Engine game;
-    
+    Engine game(false);
     // Kwadrat startuje na Y = 0 i zajmuje dwa pola w pionie (Y=0 oraz Y=1).
     // Plansza ma wysokość 20 (legalne pola to od 0 do 19).
     // Chcemy opuścić go na samo dno. Skoro zajmuje 2 pola, 
@@ -122,7 +121,7 @@ TEST(BoardTest, ClearLinesAndGravity) {
 
 //Test piętrowania: drugi klocek zatrzymuje się na pierwszym, nie na podłodze
 TEST(EngineTest, BlockStacking) {
-    Engine game;
+    Engine game(false);
 
     // Pętla while zrzuca klocek w dół aż do zamrożenia (zwrócenia false)
     while (game.moveBlock(0, 1)) {}
@@ -141,9 +140,9 @@ TEST(EngineTest, BlockStacking) {
     EXPECT_EQ(game.getBlock()->getY(), 0); // Trzeci klocek już czeka na górze
 }
 
-// 3. Test pełnej rozgrywki: 5 kwadratów obok siebie czyści 2 linie i daje 200 punktów
+//Test pełnej rozgrywki: 5 kwadratów obok siebie czyści 2 linie i daje 200 punktów
 TEST(EngineTest, ClearLinesAndScoring) {
-    Engine game;
+    Engine game(false);
 
     // Przesunięcia w poziomie od pozycji startowej (x = 4), żeby zapełnić kolumny 0..9:
     // -4 -> x=0, -2 -> x=2, 0 -> x=4, +2 -> x=6, +4 -> x=8
@@ -165,5 +164,36 @@ TEST(EngineTest, ClearLinesAndScoring) {
     for (int x = 0; x < 10; ++x) {
         EXPECT_FALSE(game.getBoard().isOccupied(x, 19));
         EXPECT_FALSE(game.getBoard().isOccupied(x, 18));
+    }
+}
+
+TEST(EngineTest, GameOverWhenStackReachesTop) {
+    Engine game(false); // same kwadraty 2x2
+
+    // Plansza ma wysokość 20 -> 9 kwadratów zajmuje y = 2..19.
+    // 10. kwadrat pojawia się jeszcze legalnie na y = 0..1.
+    for (int i = 0; i < 9; ++i) {
+        while (game.moveBlock(0, 1)) {}
+        EXPECT_FALSE(game.isGameOver());
+    }
+
+    // 10. kwadrat uderza w wieżę i zamraża się na samej górze (y = 0..1).
+    // Próba spawnu 11. kwadratu na (4, 0) wywołuje kolizję -> Game Over.
+    while (game.moveBlock(0, 1)) {}
+
+    EXPECT_TRUE(game.isGameOver());
+    // Po Game Over żaden ruch nie może już przejść
+    EXPECT_FALSE(game.moveBlock(-1, 0));
+    EXPECT_FALSE(game.moveBlock(0, 1));
+}
+
+TEST(EngineTest, RandomSpawningFitsInsideBoard) {
+    Engine game(true); // tryb losowy
+
+    // Losujemy 50 klocków na pustej planszy — żaden nie może wystawać poza y = 0
+    for (int i = 0; i < 50; ++i) {
+        game.SpawnBlock();
+        ASSERT_NE(game.getBlock(), nullptr);
+        EXPECT_FALSE(game.isGameOver());
     }
 }
