@@ -74,7 +74,6 @@ private:
         display_->setTextSize(1);
         display_->setTextWrap(false);
 
-        // Na szerokości 32 px czcionką TomThumb mieści się max 8 znaków w linii
         display_->setTextColor(display_->color565(255, 40, 40));
         display_->setCursor(8, 16);
         display_->print("GAME");
@@ -102,6 +101,8 @@ public:
 
         HUB75_I2S_CFG cfg(DISP_RES_X, DISP_RES_Y, DISP_CHAIN, pins);
         cfg.double_buff = true; // Podwójny bufor eliminuje migotanie klatek
+        cfg.clkphase = false;     // odwraca zbocze zegara CLK (najczęściej naprawia dół)
+        cfg.latch_blanking = 2;
 
         display_ = std::make_unique<MatrixPanel_I2S_DMA>(cfg);
         if (!display_->begin()) {
@@ -109,7 +110,7 @@ public:
         }
 
         display_->setBrightness8(brightness);
-        display_->setRotation(1); // Pionowo: 32x64 px
+        display_->setRotation(3); // Pionowo: 32x64 px
         display_->clearScreen();
         display_->flipDMABuffer();
         return true;
